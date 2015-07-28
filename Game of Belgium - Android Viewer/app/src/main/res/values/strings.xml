@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Game of Belgium</string>
+    <string name="action_play">Play</string>
+    <string name="button_text">Play</string>
+    <string name="datum">Datum:</string>
+    <string name="nietgestart">niet gestart</string>
+    <string name="arrow_down">↓</string>
+    <string name="arrow_up">↑</string>
+    <string name="zero">0</string>
+    <string name="action_reset">Reset</string>
+    <string name="action_pause">Pause</string>
+
+</resources>

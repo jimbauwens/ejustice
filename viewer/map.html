@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Game of Belgium</title>
+        <script type="text/javascript" src="http://www.openlayers.org/api/OpenLayers.js"></script>
+        <script type="text/javascript" src="http://www.openstreetmap.org/openlayers/OpenStreetMap.js"></script>
+		<script type="text/javascript" src="jquery.js"></script>
+        <script type="text/javascript">
+// <![CDATA[
+
+var VIEW_URL = "http://jimbauwens.cloudant.com/ejustice/_design/views/_view/locationByDate";
+
+function init(){
+    proj4326 = new OpenLayers.Projection("EPSG:4326");
+    projmerc = new OpenLayers.Projection("EPSG:900913");
+
+    var lonlat = new OpenLayers.LonLat(4.3833, 50.7167);
+    var zoom = 8;
+    var mlonlat = new OpenLayers.LonLat(13.3776, 52.5162);
+
+    var map = new OpenLayers.Map("map", {
+			controls: [
+				new OpenLayers.Control.KeyboardDefaults(),
+				new OpenLayers.Control.Navigation(),
+				new OpenLayers.Control.LayerSwitcher(),
+				new OpenLayers.Control.PanZoomBar(),
+                new OpenLayers.Control.MousePosition()
+            ],
+			maxExtent:
+                new OpenLayers.Bounds(-20037508.34,-20037508.34,
+                                       20037508.34, 20037508.34),
+			numZoomLevels: 18,
+            maxResolution: 156543,
+            units: 'm',
+            projection: projmerc,
+            displayProjection: proj4326
+    } );
+
+    var mapnik_layer = new OpenLayers.Layer.OSM.Mapnik("Mapnik");
+    map.addLayers([mapnik_layer]);
+
+    lonlat.transform(proj4326, projmerc);
+    map.setCenter(lonlat, zoom);
+
+    var size = new OpenLayers.Size(32, 32);
+    var offset = new OpenLayers.Pixel(-22, -30);
+    var icon = new OpenLayers.Icon('pin-32x32.png', size, offset);
+    var marker = new OpenLayers.Marker(mlonlat.transform(proj4326, projmerc), icon);
+
+    markers = new OpenLayers.Layer.Markers("Markers");
+    map.addLayer(markers);
+}
+
+function addPoint(latlon, color) {
+	if (latlon) {
+		var pos = new OpenLayers.LonLat(latlon.lon, latlon.lat);
+		
+		var size = new OpenLayers.Size(8, 8);
+		var offset = new OpenLayers.Pixel(0, 0);
+		var icon = new OpenLayers.Icon(color + '.png', size, offset);
+		var marker = new OpenLayers.Marker(pos.transform(proj4326, projmerc), icon);
+		marker.setOpacity(0.2);
+		
+		markers.addMarker(marker);
+	}
+}
+
+function getDay(date) {
+	$.ajax({
+		url: VIEW_URL + "?key=%22" + date + "%22",
+		dataType: "jsonp"
+	}).done(function(data) {
+		var rows = data.rows;
+		for (var i=0; i<rows.length; i++) {
+			var item = rows[i].value;
+			var color = item[1] == "einde" ? "red" : "green";
+			var stat = $("#" + item[1]);
+			stat.text(parseInt(stat.text())+1);
+			addPoint(item[0], color)
+		}
+		
+		setTimeout(tick, 100);
+	}).fail(function() {
+		setTimeout(tick, 100);
+	});
+}
+
+var currentDay = new Date(2014, 0, 1);
+
+function play() {
+	tick();
+}
+
+function tick() {
+	currentDay.setDate(currentDay.getDate() + 1);
+  
+	var year  = currentDay.getFullYear();
+	var month = currentDay.getMonth() + 1;
+	var day   = currentDay.getDate();
+	
+	if (month<10) month = "0" + month;
+	if (day<10) day = "0" + day;
+	var date = "" + year + "-" + month + "-" + day;
+	
+	$("#date").val(date);
+	getDay(date);
+}
+
+// ]]>
+        </script>
+    </head>
+    <body onload="init()">
+		<input type="button" onclick="play()" value="start"><input type="text" id="date"><br>
+		Opriching: <span id="oprichting">0</span>
+		Einde: <span id="einde">0</span>
+        <div id="map" style="width: 100%; height: 700px;"></div>
+       
+    </body>
+</html>
